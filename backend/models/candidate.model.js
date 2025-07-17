@@ -4,21 +4,55 @@ const candidateSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
+
   position: { type: String, required: true },
   experience: { type: String, required: true },
+
   status: {
     type: String,
-    enum: ['active', 'interview_scheduled', 'hired', 'rejected'],
-    default: 'active'
+    enum: [
+      'application_sent',
+      'shortlisted',
+      'interview_scheduled',
+      'offer',
+      'joined',
+      'hired',
+      'rejected',
+      'active'
+    ],
+    default: 'application_sent',
   },
-  assignedCompany: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true }, // Reference to Company
-  interviewDate: { type: Date, required: true },
+
+  role: {
+    type: String,
+    enum: ['candidate'],
+    default: 'candidate',
+  },
+
+  assignedCompany: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    required: false, // make optional to allow creation before assignment
+  },
+
+  interviewDate: {
+    type: Date,
+  },
+
   skills: {
     type: [String],
-    default: []
+    default: [],
   },
-  createdAt: { type: Date, default: Date.now },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Candidate = mongoose.model('Candidate', candidateSchema);

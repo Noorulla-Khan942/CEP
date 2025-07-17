@@ -6,6 +6,9 @@ import candidateRoutes from './routes/candidates.js';
 import companyRoutes from './routes/companies.js';
 import interviewRoutes from './routes/interviews.js';
 import { connectDB } from './config/db.js';
+import profileRoutes from './routes/candidate.route/profile.route.js';
+
+
 
 dotenv.config();
 
@@ -22,6 +25,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/interviews', interviewRoutes);
+
+//Candidate Routes
+app.use('/api/profile', profileRoutes);
+
 
 // Health check
 app.get('/api/health', (req, res) => {

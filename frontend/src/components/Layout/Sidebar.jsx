@@ -55,9 +55,9 @@ const Sidebar = () => {
       case 'candidate':
         return [
           ...baseItems,
-          { icon: UserCheck, label: 'My Profile', path: '/profile' },
-          { icon: Calendar, label: 'My Interviews', path: '/my-interviews' },
-          { icon: MessageSquare, label: 'Messages', path: '/messages' },
+          { icon: UserCheck, label: 'My Profile', path:"/candidate/profile" },
+          { icon: Calendar, label: 'My Interviews', path:"/candidate/interview" },
+          { icon: MessageSquare, label: 'Messages', path: "/candidate/messages" },
         ];
       default:
         return baseItems;

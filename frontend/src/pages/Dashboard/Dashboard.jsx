@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import AdminDashboard from './AdminDashboard';
 import RecruiterDashboard from './RecruiterDashboard';
 import CompanyDashboard from './CompanyDashboard';
-import CandidateDashboard from './CandidateDashboard';
+import CandidateDashboard from './CandidateDashboard/CandidateDashboard';
 
 const Dashboard = () => {
   const { user } = useSelector((state) => state.auth);
