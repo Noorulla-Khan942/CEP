@@ -20,9 +20,11 @@ const CandidateDashboard = () => {
   const [profileExists, setProfileExists] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchInterviews());
-    checkProfileExists();
-  }, [dispatch]);
+    if (user?._id) {
+      dispatch(fetchInterviews());
+      checkProfileExists();
+    }
+  }, [dispatch, user]);
 
   const checkProfileExists = async () => {
     try {
@@ -34,6 +36,7 @@ const CandidateDashboard = () => {
         setProfileExists(false);
       }
     } catch (err) {
+      console.error('Profile check failed:', err);
       setProfileExists(false);
     }
   };
@@ -54,12 +57,13 @@ const CandidateDashboard = () => {
     value: candidateInterviews.filter(i => i.status === key).length,
     icon: CheckCircle,
     color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50'
+    bgColor: 'bg-indigo-50',
   }));
 
   const isSubRoute = ['/candidate/profile', '/candidate/interview', '/candidate/messages'].some(path =>
     location.pathname.startsWith(path)
   );
+
   if (isSubRoute) return <Outlet />;
 
   return (
@@ -80,7 +84,6 @@ const CandidateDashboard = () => {
         </div>
       )}
 
-      {/* ✅ Conditional Profile Form Render */}
       {showProfileForm && !profileExists && (
         <CandidateProfileForm
           userId={user._id}
@@ -132,7 +135,9 @@ const CandidateDashboard = () => {
                 </div>
                 <div className="text-right">
                   <Badge variant="warning">{interview.status.replace(/_/g, ' ')}</Badge>
-                  <p className="text-sm text-gray-500 mt-1">{new Date(interview.date).toLocaleString()}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {new Date(interview.date).toLocaleString()}
+                  </p>
                 </div>
               </div>
             ))
