@@ -4,6 +4,8 @@ import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 import transporter from '../mailer.js';
 import Company from '../models/company.model.js';
 import { createEvent } from 'ics';
+import User from '../models/user.model.js'; // ✅ make sure it's "User", not "userModel"
+import bcrypt from 'bcryptjs'; // 
 
 const router = express.Router();
 
@@ -28,7 +30,6 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-
 router.post('/', authenticateToken, authorizeRoles(['admin', 'recruiter']), async (req, res) => {
   try {
     const {
@@ -38,7 +39,7 @@ router.post('/', authenticateToken, authorizeRoles(['admin', 'recruiter']), asyn
       position,
       experience,
       skills,
-      assignedCompany, // this should be company _id
+      assignedCompany,
       interviewDate,
       status
     } = req.body;
@@ -47,7 +48,6 @@ router.post('/', authenticateToken, authorizeRoles(['admin', 'recruiter']), asyn
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Fetch company info from DB to get company email and name
     const company = await Company.findById(assignedCompany);
     if (!company) {
       return res.status(404).json({ error: 'Assigned company not found' });
@@ -61,15 +61,29 @@ router.post('/', authenticateToken, authorizeRoles(['admin', 'recruiter']), asyn
       experience,
       status: status || 'active',
       skills: Array.isArray(skills) ? skills : [],
-      assignedCompany, // stored as ObjectId reference
+      assignedCompany,
       interviewDate,
       createdBy: req.user.userId
     });
 
     const savedCandidate = await newCandidate.save();
 
-    // 1. Send onboarding email with login details
+    // ✅ 1. Generate temp password & hash it
     const tempPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    // ✅ 2. Save user credentials if not already present
+    const existingUser = await User.findOne({ email: savedCandidate.email });
+    if (!existingUser) {
+      await User.create({
+        name: savedCandidate.name,
+        email: savedCandidate.email,
+        password: hashedPassword,
+        role: 'candidate'
+      });
+    }
+
+    // ✅ 3. Send onboarding email
     await transporter.sendMail({
       from: '"CEP Team" <soundarya0018@gmail.com>',
       to: savedCandidate.email,
@@ -84,7 +98,7 @@ router.post('/', authenticateToken, authorizeRoles(['admin', 'recruiter']), asyn
       `
     });
 
-    // 2. Notify company and candidate about assignment
+    // 4. Notify company and candidate
     await transporter.sendMail({
       from: '"CEP Team" <cep@gmail.com>',
       to: [savedCandidate.email, company.email],
@@ -97,14 +111,14 @@ router.post('/', authenticateToken, authorizeRoles(['admin', 'recruiter']), asyn
       `
     });
 
-    // 3. Send Interview calendar invite to candidate
+    // 5. Send ICS calendar invite
     const interviewDateObj = new Date(savedCandidate.interviewDate);
     const event = {
       start: [
         interviewDateObj.getFullYear(),
         interviewDateObj.getMonth() + 1,
         interviewDateObj.getDate(),
-        10, 0 // Customize time if needed
+        10, 0
       ],
       duration: { hours: 1 },
       title: `Interview - ${savedCandidate.position}`,
@@ -151,8 +165,7 @@ router.post('/', authenticateToken, authorizeRoles(['admin', 'recruiter']), asyn
   }
 });
 
-
-// Update entire candidate
+// Update candidate
 router.put('/:id', authenticateToken, authorizeRoles(['admin', 'recruiter']), async (req, res) => {
   try {
     const updatedCandidate = await Candidate.findByIdAndUpdate(req.params.id, req.body, {
@@ -166,7 +179,7 @@ router.put('/:id', authenticateToken, authorizeRoles(['admin', 'recruiter']), as
   }
 });
 
-// Update only candidate status
+// Patch status
 router.patch('/:id/status', authenticateToken, async (req, res) => {
   try {
     const { status } = req.body;
